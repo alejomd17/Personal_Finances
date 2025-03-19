@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tasas y Amortización</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Calculadora de Tasas de Interés</h1>
+    <form id="interestForm">
+        <!-- Campos para calcular la tasa de interés -->
+    </form>
+    <h2>Resultado:</h2>
+    <p id="result"></p>
+
+    <h1>Tabla de Amortización</h1>
+    <form id="amortizationForm">
+        <label for="loanAmount">Monto del Préstamo:</label>
+        <input type="text" id="loanAmount" name="loanAmount" placeholder="Ingrese el monto" required>
+
+        <label for="annualInterestRate">Tasa de Interés Anual (%):</label>
+        <input type="text" id="annualInterestRate" name="annualInterestRate" placeholder="Ingrese la tasa anual" required>
+
+        <label for="loanTermYears">Plazo (años):</label>
+        <input type="text" id="loanTermYears" name="loanTermYears" placeholder="Ingrese el plazo" required>
+
+        <button type="submit">Calcular</button>
+    </form>
+    <div id="amortizationResult"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
