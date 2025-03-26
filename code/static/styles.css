@@ -1,0 +1,16 @@
+#dictAbonosCapital {
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 50%;
+    margin-top: 20px;
+}
+
+#dictAbonosCapital th, #dictAbonosCapital td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+
+#dictAbonosCapital th {
+    background-color: #f2f2f2;
+}

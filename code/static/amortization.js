@@ -1,66 +1,94 @@
+let abonoCapitalAll = {};
 document.getElementById('amortizationForm').addEventListener('submit', async function(event) {
     event.preventDefault();
+    const formData = {
 
-    const loanAmount = parseFloat(document.getElementById('loanAmount').value);
-    const interestRate = parseFloat(document.getElementById('interestRate').value);
-    const typeRate = document.getElementById('typeRate').value;
-    const period = document.getElementById('period').value;
-    const loanTermYears = parseInt(document.getElementById('loanTermYears').value);
+        desembolsoDate : document.getElementById('desembolsoDate').value,
+        loanAmount : parseFloat(document.getElementById('loanAmount').value),
+        InterestRate : parseFloat(document.getElementById('InterestRate').value),
+        rateType : document.getElementById('rateType').value,
+        ratePeriod : document.getElementById('ratePeriod').value,
+        loanTermYears : parseFloat(document.getElementById('loanTermYears').value),
+        insurance : parseFloat(document.getElementById('insurance').value) || 90000,
+        abono_capital_all : abonoCapitalAll};
 
-    if (isNaN(loanAmount) || isNaN(annualInterestRate) || isNaN(loanTermYears)) {
+    // const abonosCapitalDate = document.getElementById('abonosCapitalDate').value;
+    // const abonosCapitalValue = parseFloat(document.getElementById('abonosCapitalValue').value);
+    // const abono_capital_all = {};
+    // abono_capital_all[abonosCapitalDate] = abonosCapitalValue;
+
+    if (isNaN(loanAmount) || isNaN(InterestRate) || isNaN(loanTermYears)) {
         alert("Por favor, ingrese valores válidos.");
         return;
     }
 
+    const response = await fetch('/amortization/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'},
+        // body: JSON.stringify({
+        //     desembolso_date: desembolsoDate,
+        //     loan_amount: loanAmount,
+        //     interest_rate: InterestRate,
+        //     type_rate: rateType,
+        //     period: ratePeriod,
+        //     loan_term_years: loanTermYears,
+        //     insurance: insurance,
+        //     abono_capital_all: abonoCapitalAll
+        body: JSON.stringify(formData),
+    });
+
+    const responseText = await response.text(); // Captura la respuesta como texto
+
     try {
-        const response = await fetch('/calculate_amortization_table/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                loan_amount: loanAmount,
-                annual_interest_rate: annualInterestRate,
-                loan_term_years: loanTermYears
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const data = JSON.parse(responseText); // Intenta parsear la respuesta como JSON
+        console.log("Datos recibidos del backend:", data);
         displayAmortizationTable(data.amortization_table);
     } catch (error) {
-        console.error("Error al calcular la tabla de amortización:", error);
-        document.getElementById('amortizationResult').textContent = "Error al calcular la tabla de amortización.";
-    }
-});
+        console.error("Error al parsear la respuesta del backend:", responseText);
+        document.getElementById('amortizationResult').textContent =
+        "Error en la respuesta del servidor. Verifique la consola.";
+    };
+})
 
-function displayAmortizationTable(table) {
+function displayAmortizationTable(tableData) {
     const resultDiv = document.getElementById('amortizationResult');
     resultDiv.innerHTML = "<h2>Tabla de Amortización</h2>";
 
-    const tableHtml = `
-        <table border="1">
-            <tr>
-                <th>Mes</th>
-                <th>Cuota</th>
-                <th>Interés</th>
-                <th>Abono</th>
-                <th>Saldo</th>
-            </tr>
-            ${table.map(row => `
-                <tr>
-                    <td>${row.month}</td>
-                    <td>${row.payment}</td>
-                    <td>${row.interest}</td>
-                    <td>${row.principal}</td>
-                    <td>${row.balance}</td>
-                </tr>
-            `).join('')}
-        </table>
-    `;
+    const table = document.createElement('table');
+    table.className = 'amortization-table';
 
-    resultDiv.innerHTML += tableHtml;
+    const thead = document.createElement('thead');
+    thead.innerHTML = `  
+                <tr>
+                    <th>#</th>
+                    <th>Anno_Mes</th>
+                    <th>Interes</th>
+                    <th>Capital</th>
+                    <th>Seguro</th>
+                    <th>Cuota</th>
+                    <th>Abono_Extra</th>
+                    <th>Saldo</th>
+                </tr>`;
+            
+    table.appendChild(thead);
+    
+    const tbody = document.createElement('tbody');
+    tableData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+                        <td>${row.num}</td>
+                        <td>${row.anno_mes}</td>
+                        <td>${row.interest.toLocaleString('es-ES')}</td>
+                        <td>${row.capital.toLocaleString('es-ES')}</td>
+                        <td>${row.insurance.toLocaleString('es-ES')}</td>
+                        <td>${row.payment.toLocaleString('es-ES')}</td>
+                        <td>${row.abono_capital.toLocaleString('es-ES')}</td>
+                        <td>${row.balance.toLocaleString('es-ES')}</td>
+                `;
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    resultDiv.append(table);
 }

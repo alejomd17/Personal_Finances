@@ -7,7 +7,7 @@ class InterestRates():
         # Si es Nominal Siempre la vuelvo anual
         interes_rates = initial_rate / self.dict_period[current_period]
         current_period = 'Mensual'
-        return initial_rate, current_period
+        return interes_rates, current_period
 
     def calculate_interest_rate(self, initial_rate:float, rate_type:str,current_period:str, wished_period:str) -> float:
         if rate_type == 'Nominal':
