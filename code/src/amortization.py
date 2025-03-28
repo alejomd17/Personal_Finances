@@ -74,7 +74,6 @@ class Amortization:
             print(f'Number of months you paid: {number_months_to_pay_total}')
             print(f'Number of months saved: {number_of_payments - number_months_to_pay_total}')
              
-
         return df_amortization_table
             
     def anno_mes_str(self, anno_mes):

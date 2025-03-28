@@ -1,94 +1,130 @@
-let abonoCapitalAll = {};
-document.getElementById('amortizationForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const formData = {
+document.addEventListener("DOMContentLoaded",() => {
+    const desembolsoDate = document.getElementById('desembolsoDate')
+    const loanAmount = document.getElementById('loanAmount')
+    const InterestRate = document.getElementById('InterestRate')
+    const rateType = document.getElementById('rateType')
+    const ratePeriod = document.getElementById('ratePeriod').value
+    const loanTermYears = document.getElementById('loanTermYears')
+    const insurance = document.getElementById('insurance') || 90000
+    const abonosCapitalDate = document.getElementById('abonosCapitalDate')
+    const abonosCapitalValue = document.getElementById('abonosCapitalValue')
+    const extraAbonosCapitalBtn = document.getElementById('addAbonosCapital')
+    const extraAbonosCapitalContainer = document.getElementById('extraAbonosCapitalContainer')
+    const extraAbonosCapitalList = document.getElementById('extraAbonosCapitalList')
+    const calculateBtn = document.getElementById('calculateBtn')
+    const resultsCard = document.getElementById('resultsCard')
+    const calculationResult = document.getElementById('calculationResult')
 
-        desembolsoDate : document.getElementById('desembolsoDate').value,
-        loanAmount : parseFloat(document.getElementById('loanAmount').value),
-        InterestRate : parseFloat(document.getElementById('InterestRate').value),
-        rateType : document.getElementById('rateType').value,
-        ratePeriod : document.getElementById('ratePeriod').value,
-        loanTermYears : parseFloat(document.getElementById('loanTermYears').value),
-        insurance : parseFloat(document.getElementById('insurance').value) || 90000,
-        abono_capital_all : abonoCapitalAll};
+    let extraAbonosCapital = []
+    
+    extraAbonosCapitalList.style.display = "none"
+    extraAbonosCapitalBtn.addEventListener("click",() =>{
+        const date = abonosCapitalDate.value
+        const amount = Number.parseFloat(abonosCapitalValue.value)
 
-    // const abonosCapitalDate = document.getElementById('abonosCapitalDate').value;
-    // const abonosCapitalValue = parseFloat(document.getElementById('abonosCapitalValue').value);
-    // const abono_capital_all = {};
-    // abono_capital_all[abonosCapitalDate] = abonosCapitalValue;
+        if (!date || amount <=0) {
+            alert("Por favor, ingrese valores válidos para el Abono Extra.");
+            return;
+        }
 
-    if (isNaN(loanAmount) || isNaN(InterestRate) || isNaN(loanTermYears)) {
-        alert("Por favor, ingrese valores válidos.");
-        return;
+        extraAbonosCapital[date] = amount;
+        renderExtraAbonosCapital()
+
+        abonosCapitalDate.value = ""
+        abonosCapitalValue.value = ""
+    })
+
+    function renderExtraAbonosCapital(){
+        extraAbonosCapitalContainer.innerHTML = "";
+
+        if (Object.keys(extraAbonosCapital).length === 0) {
+            extraAbonosCapitalList.style.display = "none";
+            return
+        }
+        extraAbonosCapitalList.style.display ="block";
+
+        for (const [date, amount] of Object.entries(extraAbonosCapital)){
+            const paymentItem = document.createElement("div");
+            paymentItem.className ="payment-item";
+            paymentItem.innerHTML =`
+                        <div>
+                            <strong>${date}:</strong>$${amount.toLocaleString()}
+                            <button class"remove-btn" data-date="${date}">Eliminar</button>
+                        </div>
+                        `
+            extraAbonosCapitalContainer.appendChild(paymentItem);
+        }
     }
 
-    const response = await fetch('/amortization/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'},
-        // body: JSON.stringify({
-        //     desembolso_date: desembolsoDate,
-        //     loan_amount: loanAmount,
-        //     interest_rate: InterestRate,
-        //     type_rate: rateType,
-        //     period: ratePeriod,
-        //     loan_term_years: loanTermYears,
-        //     insurance: insurance,
-        //     abono_capital_all: abonoCapitalAll
-        body: JSON.stringify(formData),
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const dateToRemove = this.getAttribute('data-date');
+            delete extraAbonosCapital[dateToRemove];
+            renderExtraAbonosCapital();
+        });
     });
 
-    const responseText = await response.text(); // Captura la respuesta como texto
+    calculateBtn.addEventListener("click",
+        async () =>{
+            const data = {
+                desembolso_date: desembolsoDate,
+                loan_amount: Number.parseFloat(loanAmount.value),
+                interest_rate: Number.parseFloat(InterestRate.value),
+                type_rate: rateType,
+                period: ratePeriod,
+                loan_term_years: Number.parseFloat(loanTermYears.value),
+                insurance: Number.parseFloat(insurance.value),
+                abono_capital_all: extraAbonosCapital
+            }
 
-    try {
-        const data = JSON.parse(responseText); // Intenta parsear la respuesta como JSON
-        console.log("Datos recibidos del backend:", data);
-        displayAmortizationTable(data.amortization_table);
-    } catch (error) {
-        console.error("Error al parsear la respuesta del backend:", responseText);
-        document.getElementById('amortizationResult').textContent =
-        "Error en la respuesta del servidor. Verifique la consola.";
-    };
-})
+            if (isNaN(data.loan_amount) || isNaN(data.interest_rate) || isNaN(data.loan_term_years)) {
+                alert("Por favor, ingrese valores válidos.");
+                return;
+            }
 
-function displayAmortizationTable(tableData) {
-    const resultDiv = document.getElementById('amortizationResult');
-    resultDiv.innerHTML = "<h2>Tabla de Amortización</h2>";
+            const response = await fetch('/amortization/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+                });
 
-    const table = document.createElement('table');
-    table.className = 'amortization-table';
+                if (!response.ok){
+                    throw new Error("API rquest failed");
+                }
 
-    const thead = document.createElement('thead');
-    thead.innerHTML = `  
-                <tr>
-                    <th>#</th>
-                    <th>Anno_Mes</th>
-                    <th>Interes</th>
-                    <th>Capital</th>
-                    <th>Seguro</th>
-                    <th>Cuota</th>
-                    <th>Abono_Extra</th>
-                    <th>Saldo</th>
-                </tr>`;
-            
-    table.appendChild(thead);
+                const result = await response.json();
+                displayAmortizationTable(result);
+        }
+    )
+
+    function displayAmortizationTable(result) {
+        // Show the results card
+        resultsCard.classList.remove("hidden")
     
-    const tbody = document.createElement('tbody');
-    tableData.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-                        <td>${row.num}</td>
-                        <td>${row.anno_mes}</td>
-                        <td>${row.interest.toLocaleString('es-ES')}</td>
-                        <td>${row.capital.toLocaleString('es-ES')}</td>
-                        <td>${row.insurance.toLocaleString('es-ES')}</td>
-                        <td>${row.payment.toLocaleString('es-ES')}</td>
-                        <td>${row.abono_capital.toLocaleString('es-ES')}</td>
-                        <td>${row.balance.toLocaleString('es-ES')}</td>
-                `;
-        tbody.appendChild(tr);
+        let resultText = ""
+    
+        if (typeof result === "string") {
+          resultText = result
+        } else {
+          resultText = `#: $${result.num}\n`
+          resultText += `Anno_Mes: $${result.anno_mes}\n`
+          resultText += `Interes: ${result.interest}%\n`
+          resultText += `Capital: ${result.capital} years\n`
+          resultText += `Seguro: $${result.insurance}\n`
+          resultText += `Cuota: $${result.payment}\n`
+          resultText += `Abono_Extra: $${result.abono_capital}\n\n`
+          resultText += `Saldo: $${result.balance}\n\n`
+    
+        result.forEach((row) => {
+            resultText = `#: $${row.num}\n`
+            resultText += `Anno_Mes: $${row.anno_mes}\n`
+            resultText += `Interes: ${row.interest}%\n`
+            resultText += `Capital: ${row.capital} years\n`
+            resultText += `Seguro: $${row.insurance}\n`
+            resultText += `Cuota: $${row.payment}\n`
+            resultText += `Abono_Extra: $${row.abono_capital}\n\n`
+            resultText += `Saldo: $${row.balance}\n\n`
+        });
+        }};
     });
-    table.appendChild(tbody);
-
-    resultDiv.append(table);
-}
