@@ -7,7 +7,7 @@ document.getElementById('amortizationForm').addEventListener('submit', async fun
     const rateType = document.getElementById('rateType').value;;
     const ratePeriod = document.getElementById('ratePeriod').va;lue;
     const loanTermYears = parseFloat(document.getElementById('loanT;ermYears').value);
-    const insurance = parseFloat(document.getElementById('insurance').value) || 90000;;
+    const insurance = parseFloat(document.getElementById('insurance').value) || 90000;
     // const abono_capital_all = abonoCapitalAll};
     const abonosCapitalDate = document.getElementById('abonosCapitalDate').value;
     const abonosCapitalValue = parseFloat(document.getElementById('abonosCapitalValue').value);

@@ -23,32 +23,13 @@ class AmortizationRequest(BaseModel):
     insurance: float = 0.0
     abono_capital_all: Dict[str, float]
 
-# class InterestRatesRequest(BaseModel):
-#     initial_rate:float
-#     rate_type:str
-#     initial_period:str
-#     wished_period:str
-
-# @app.post('/calculate_interest_rate/')
-# async def calculate_interest_rates(request: InterestRatesRequest)     :
-#     try:
-#         rates_work = interest_rates.calculate_interest_rate(
-#             request.initial_rate,
-#             request.rate_type,
-#             request.initial_period,
-#             request.wished_period,
-#             )
-        
-#         return {"interest_rate":rates_work}
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=str(e))
-
 @app.post('/amortization/')
 async def calculate_amortization_table(request: AmortizationRequest):
     """
     Calcula la tabla de amortización con los parámetros proporcionados.
 
     Args:
+
         desembolso_date: Fecha en formato AAAAMM\n
         loan_amount: Monto total del préstamo\n
         interest_rate: Tasa de interés (porcentaje)\n
@@ -59,13 +40,14 @@ async def calculate_amortization_table(request: AmortizationRequest):
         abono_capital_all: Diccionario de abonos {AAAAMM: valor}\n
 
     Returns:
+
         Dict con la tabla de amortización
     """
+    
     try:
         if len(request.desembolso_date) != 6 or not (request.desembolso_date.isdigit()):
             raise ValueError("Formato de fecha inválido. Deber ser AAAAMM")
         
-
         amortization_table  = amortization.calculation_amortization(
         desembolso_date     = request.desembolso_date,
         loan_amount         = request.loan_amount,
@@ -86,7 +68,7 @@ async def calculate_amortization_table(request: AmortizationRequest):
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     try:
-        with open("templates/amortization.html","r", encoding="utf-8") as file:
+        with open("templates/amortization_test.html","r", encoding="utf-8") as file:
             content = file.read()
             return HTMLResponse(content=content)
     except Exception as e:
