@@ -1,130 +1,127 @@
 document.addEventListener("DOMContentLoaded",() => {
-    const desembolsoDate = document.getElementById('desembolsoDate')
-    const loanAmount = document.getElementById('loanAmount')
-    const InterestRate = document.getElementById('InterestRate')
-    const rateType = document.getElementById('rateType')
-    const ratePeriod = document.getElementById('ratePeriod').value
-    const loanTermYears = document.getElementById('loanTermYears')
-    const insurance = document.getElementById('insurance') || 90000
+    
+    const desembolsoDate = document.getElementById('desembolsoDate');
+    const loanAmount = document.getElementById('loanAmount');
+    const InterestRate = document.getElementById('InterestRate');
+    const rateType = document.getElementById('rateType');
+    const ratePeriod = document.getElementById('ratePeriod');
+    const loanTermYears = document.getElementById('loanTermYears');
+    const insurance = document.getElementById('insurance');
+    const calculateBtn = document.getElementById('calculateBtn');
+
     const abonosCapitalDate = document.getElementById('abonosCapitalDate')
     const abonosCapitalValue = document.getElementById('abonosCapitalValue')
     const extraAbonosCapitalBtn = document.getElementById('addAbonosCapital')
     const extraAbonosCapitalContainer = document.getElementById('extraAbonosCapitalContainer')
-    const extraAbonosCapitalList = document.getElementById('extraAbonosCapitalList')
-    const calculateBtn = document.getElementById('calculateBtn')
-    const resultsCard = document.getElementById('resultsCard')
-    const calculationResult = document.getElementById('calculationResult')
 
-    let extraAbonosCapital = []
+    const abono_capital_all = {};
     
-    extraAbonosCapitalList.style.display = "none"
-    extraAbonosCapitalBtn.addEventListener("click",() =>{
-        const date = abonosCapitalDate.value
-        const amount = Number.parseFloat(abonosCapitalValue.value)
+    function displayExtraAbonosCapital(){
+        const tableBody = document.querySelector('#abonosTable tbody')
+        tableBody.innerHTML = "";
 
-        if (!date || amount <=0) {
-            alert("Por favor, ingrese valores válidos para el Abono Extra.");
-            return;
-        }
+        // Ordenar abonos por fecha
+        const sortedAbonos = Object.entries(abono_capital_all).sort((a, b) => a[0].localeCompare(b[0]));
+        
+        sortedAbonos.forEach(([date, value]) => {
+            const newRow = tableBody.insertRow();
+            
+            // Celda de Fecha
+            const dateCell = newRow.insertCell(0);
+            dateCell.textContent = date;
+            
+            // Celda de Monto
+            const amountCell = newRow.insertCell(1);
+            amountCell.textContent = `$${value.toLocaleString()}`;
+            
+            // Celda de Acciones
+            const actionCell = newRow.insertCell(2);
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-remove-abono';
+            removeBtn.textContent = 'Eliminar';
+            removeBtn.setAttribute('data-date', date);
+            actionCell.appendChild(removeBtn);
+        });
 
-        extraAbonosCapital[date] = amount;
-        renderExtraAbonosCapital()
-
-        abonosCapitalDate.value = ""
-        abonosCapitalValue.value = ""
-    })
-
-    function renderExtraAbonosCapital(){
-        extraAbonosCapitalContainer.innerHTML = "";
-
-        if (Object.keys(extraAbonosCapital).length === 0) {
-            extraAbonosCapitalList.style.display = "none";
-            return
-        }
-        extraAbonosCapitalList.style.display ="block";
-
-        for (const [date, amount] of Object.entries(extraAbonosCapital)){
-            const paymentItem = document.createElement("div");
-            paymentItem.className ="payment-item";
-            paymentItem.innerHTML =`
-                        <div>
-                            <strong>${date}:</strong>$${amount.toLocaleString()}
-                            <button class"remove-btn" data-date="${date}">Eliminar</button>
-                        </div>
-                        `
-            extraAbonosCapitalContainer.appendChild(paymentItem);
-        }
+        document.querySelectorAll('.btn-remove-abono').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const dateToRemove = this.getAttribute('data-date');
+                delete abono_capital_all[dateToRemove];
+                displayExtraAbonosCapital();
+            });
+        });
     }
 
-    document.querySelectorAll('.remove-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const dateToRemove = this.getAttribute('data-date');
-            delete extraAbonosCapital[dateToRemove];
-            renderExtraAbonosCapital();
-        });
-    });
+
+        extraAbonosCapitalBtn.addEventListener("click",() =>{
+            const date = abonosCapitalDate.value
+            const amount = Number.parseFloat(abonosCapitalValue.value)
+    
+            if (!date || amount <=0) {
+                alert("Por favor, ingrese valores válidos para el Abono Extra.");
+                return;
+            }
+    
+            abono_capital_all[date] = amount;
+    
+            abonosCapitalDate.value = "";
+            abonosCapitalValue.value = "";
+            displayExtraAbonosCapital();
+
+        })
+
 
     calculateBtn.addEventListener("click",
         async () =>{
             const data = {
-                desembolso_date: desembolsoDate,
+                desembolso_date: desembolsoDate.value,
                 loan_amount: Number.parseFloat(loanAmount.value),
                 interest_rate: Number.parseFloat(InterestRate.value),
-                type_rate: rateType,
-                period: ratePeriod,
+                type_rate: rateType.value,
+                period: ratePeriod.value,
                 loan_term_years: Number.parseFloat(loanTermYears.value),
                 insurance: Number.parseFloat(insurance.value),
-                abono_capital_all: extraAbonosCapital
-            }
+                abono_capital_all: abono_capital_all,
+            };
 
-            if (isNaN(data.loan_amount) || isNaN(data.interest_rate) || isNaN(data.loan_term_years)) {
-                alert("Por favor, ingrese valores válidos.");
-                return;
-            }
-
-            const response = await fetch('/amortization/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+            try {
+                const response = await fetch('/amortization/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
 
-                if (!response.ok){
-                    throw new Error("API rquest failed");
+                if (!response.ok) {
+                    throw new Error("API request failed");
                 }
 
                 const result = await response.json();
                 displayAmortizationTable(result);
-        }
-    )
-
-    function displayAmortizationTable(result) {
-        // Show the results card
-        resultsCard.classList.remove("hidden")
-    
-        let resultText = ""
-    
-        if (typeof result === "string") {
-          resultText = result
-        } else {
-          resultText = `#: $${result.num}\n`
-          resultText += `Anno_Mes: $${result.anno_mes}\n`
-          resultText += `Interes: ${result.interest}%\n`
-          resultText += `Capital: ${result.capital} years\n`
-          resultText += `Seguro: $${result.insurance}\n`
-          resultText += `Cuota: $${result.payment}\n`
-          resultText += `Abono_Extra: $${result.abono_capital}\n\n`
-          resultText += `Saldo: $${result.balance}\n\n`
-    
-        result.forEach((row) => {
-            resultText = `#: $${row.num}\n`
-            resultText += `Anno_Mes: $${row.anno_mes}\n`
-            resultText += `Interes: ${row.interest}%\n`
-            resultText += `Capital: ${row.capital} years\n`
-            resultText += `Seguro: $${row.insurance}\n`
-            resultText += `Cuota: $${row.payment}\n`
-            resultText += `Abono_Extra: $${row.abono_capital}\n\n`
-            resultText += `Saldo: $${row.balance}\n\n`
-        });
-        }};
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un problema con la solicitud a la API.");
+            }
     });
+});
+
+
+function displayAmortizationTable(result) {
+    
+    const resultCard = document.getElementById("resultsTable");
+    const tableBody = document.getElementById("calculationResult").getElementsByTagName('tbody')[0];
+    resultCard.classList.remove("hidden");
+
+    tableBody.innerHTML = "";
+
+    result.amortization_table.forEach(row => {
+                const newRow = tableBody.insertRow();
+                newRow.insertCell(0).textContent = row.num;
+                newRow.insertCell(1).textContent = row.anno_mes;
+                newRow.insertCell(2).textContent = `$${row.interest.toLocaleString()}`;
+                newRow.insertCell(3).textContent = `$${row.capital.toLocaleString()}`;
+                newRow.insertCell(4).textContent = `$${row.insurance.toLocaleString()}`;
+                newRow.insertCell(5).textContent = `$${row.payment.toLocaleString()}`;
+                newRow.insertCell(6).textContent = `$${row.abono_capital?.toLocaleString()}`;
+                newRow.insertCell(7).textContent = `$${row.balance.toLocaleString()}`;
+            });
+        }

@@ -1,9 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import Dict, Optional
-from datetime import datetime
+from typing import Dict
 from src.interest_rates import InterestRates
 from src.amortization import Amortization
 
@@ -63,12 +62,13 @@ async def calculate_amortization_table(request: AmortizationRequest):
     except ValueError as ve:
         raise HTTPException(status_code=422, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'error inteerno: {str(e)}')
+        raise HTTPException(status_code=500, detail=f'error interno: {str(e)}')
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     try:
-        with open("templates/amortization_test.html","r", encoding="utf-8") as file:
+        # with open("templates/amortization_test.html","r", encoding="utf-8") as file:
+        with open("templates/amortization.html","r", encoding="utf-8") as file:
             content = file.read()
             return HTMLResponse(content=content)
     except Exception as e:
